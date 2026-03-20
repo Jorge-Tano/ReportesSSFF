@@ -5,7 +5,7 @@ import { FechaActiva } from './FechaActiva'
 
 interface HeaderProps {
   lastSync: string | null
-  archivo?: string
+  archivo?: string | null
   fecha: string
   esHoy: boolean
   onHistorialClick: () => void

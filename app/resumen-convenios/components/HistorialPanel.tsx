@@ -1,6 +1,6 @@
 'use client'
 
-import { DiaHistorial } from '@/types'
+import { DiaHistorial } from '../types'
 import { fmtFecha, fmtNum } from '../utils/formatters'
 
 interface HistorialPanelProps {

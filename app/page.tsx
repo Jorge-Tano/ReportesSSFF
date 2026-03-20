@@ -2,12 +2,13 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Lock, User, LogIn } from 'lucide-react'
 
-export default function LoginPage() {
+// Componente que contiene la lógica que usa useSearchParams
+function LoginForm() {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const registered   = searchParams.get('registered')
@@ -121,5 +122,24 @@ export default function LoginPage() {
         </form>
       </div>
     </div>
+  )
+}
+
+// Componente principal envuelto en Suspense
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-lg w-full max-w-md overflow-hidden border border-gray-200 p-8 text-center">
+          <div className="w-16 h-16 rounded-full bg-emerald-700/30 flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <LogIn className="w-8 h-8 text-emerald-100" />
+          </div>
+          <div className="h-8 w-48 bg-gray-200 rounded mx-auto mb-2 animate-pulse"></div>
+          <div className="h-4 w-64 bg-gray-200 rounded mx-auto animate-pulse"></div>
+        </div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }
