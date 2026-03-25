@@ -11,13 +11,12 @@ interface CardProps {
   iconBg:      string
   title:       string
   description: string
-  tag:         string
   accentFrom:  string
   accentTo:    string
   borderHover: string
 }
 
-function DashCard({ href, icon, iconBg, title, description, tag, accentFrom, accentTo, borderHover }: CardProps) {
+function DashCard({ href, icon, iconBg, title, description, accentFrom, accentTo, borderHover }: CardProps) {
   return (
     <Link href={href} className="group flex-1">
       <div className={`relative overflow-hidden bg-white rounded-2xl border border-gray-200 shadow-sm transition-all duration-300 p-8 cursor-pointer hover:shadow-xl flex flex-col ${borderHover}`}>
@@ -35,10 +34,6 @@ function DashCard({ href, icon, iconBg, title, description, tag, accentFrom, acc
               <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all duration-200 flex-shrink-0 mt-0.5" />
             </div>
             <p className="text-sm text-slate-500 mt-2 leading-relaxed min-h-[3rem]">{description}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
-            <span className="text-xs text-emerald-700 font-semibold">{tag}</span>
           </div>
         </div>
 
@@ -80,7 +75,6 @@ export default function DashboardPage() {
             iconBg="bg-gradient-to-br from-emerald-600 to-emerald-800"
             title="Resumen Convenios"
             description="Métricas y seguimiento de convenios procesados. Historial de versiones por día y auditoría de archivos."
-            tag="Actualizado hoy"
             accentFrom="from-emerald-500"
             accentTo="via-emerald-300"
             borderHover="hover:border-emerald-400"
@@ -92,7 +86,6 @@ export default function DashboardPage() {
             iconBg="bg-gradient-to-br from-blue-600 to-blue-800"
             title="Ventas PPFF"
             description="Panel de ventas AV y SAV con métricas por segmento. Avances, conversión de seguros y financiado del día."
-            tag="Actualizado hoy"
             accentFrom="from-blue-500"
             accentTo="via-blue-300"
             borderHover="hover:border-blue-400"

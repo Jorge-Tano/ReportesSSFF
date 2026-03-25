@@ -1,7 +1,7 @@
 'use client'
 // app/ppff/components/TablaPPFF.tsx
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { fmtNum, fmtCLP } from '../utils/formatters'
 import type { SegmentoSAR } from '../types'
 
@@ -102,18 +102,14 @@ export function TablaPPFF({ segmentos, loading }: TablaPPFFProps) {
               const isOpen = !!expanded[nombre]
               if (!s) return null
               return (
-                <>
-                  <tr key={nombre} onClick={() => toggle(nombre)}
+                <React.Fragment key={nombre}>
+                  <tr onClick={() => toggle(nombre)}
                     className="cursor-pointer hover:bg-gray-50/70 transition-colors border-b border-gray-200">
                     <td className="px-3 py-2.5">
                       <div className="flex items-center gap-2">
                         <ChevronIcon open={isOpen} />
                         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: cfg.color }} />
                         <span className="text-sm font-medium text-gray-800">{nombre}</span>
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded"
-                          style={{ background: cfg.badgeBg, color: cfg.badgeText }}>
-                          {cfg.hijos.length} sub
-                        </span>
                       </div>
                     </td>
                     <td className={num}>{fmtNum(s.op)}</td>
@@ -151,7 +147,7 @@ export function TablaPPFF({ segmentos, loading }: TablaPPFFProps) {
                       </tr>
                     )
                   })}
-                </>
+                </React.Fragment>
               )
             })}
 
