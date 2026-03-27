@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
-import { Home, BarChart2, Phone, LogOut, UserPlus, Users, TrendingUp } from 'lucide-react'
+import { Home, BarChart2, Phone, LogOut, UserPlus, Users, TrendingUp, FileText } from 'lucide-react'
 
 interface NavItem { id: string; label: string; href: string; icon: React.ReactNode; badge?: number }
 
@@ -12,6 +12,7 @@ const navItems: NavItem[] = [
   { id: 'home',              label: 'Inicio',            href: '/dashboard',         icon: <Home       className="w-5 h-5" /> },
   { id: 'resumen-convenios', label: 'Resumen Convenios', href: '/resumen-convenios', icon: <BarChart2  className="w-5 h-5" /> },
   { id: 'ppff',              label: 'Ventas PPFF',       href: '/ppff',              icon: <TrendingUp className="w-5 h-5" /> },
+  { id: 'logs',              label: 'Logs del Sistema',  href: '/logs',              icon: <FileText   className="w-5 h-5" /> },
   { id: 'usuarios',          label: 'Usuarios',          href: '/usuarios',          icon: <Users      className="w-5 h-5" /> },
 ]
 
@@ -37,6 +38,7 @@ export function NavbarWithMobile() {
   const shortLabel = (item: NavItem) => {
     if (item.label === 'Resumen Convenios') return 'Convenios'
     if (item.label === 'Ventas PPFF')       return 'PPFF'
+    if (item.label === 'Logs del Sistema')  return 'Logs'
     return item.label
   }
 
@@ -51,7 +53,7 @@ export function NavbarWithMobile() {
       </div>
 
       {/* Navegación */}
-      <nav className="p-2 space-y-1 flex-1 mt-1">
+      <nav className="p-2 space-y-1 flex-1 mt-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive  = pathname === item.href
           const isHovered = hoveredItem === item.id

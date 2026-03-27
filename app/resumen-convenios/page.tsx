@@ -24,7 +24,7 @@ export default function ConveniosPage() {
     <div>
       <NavbarWithMobile />
       <AppHeader />
-      <div className="min-h-screen bg-white text-gray-600 p-6 md:p-10 font-sans">
+      <div className="min-h-screen bg-white text-gray-600 m-2 font-sans">
         <Header
           lastSync={data?.last_sync ?? null}
           archivo={data?.archivo}
@@ -44,6 +44,8 @@ export default function ConveniosPage() {
 
         <TablaConvenios
           metricas={data?.metricas ?? []}
+          q_seg={data?.q_seg}
+          conv_seg={data?.conv_seg}
           loading={loading}
         />
 

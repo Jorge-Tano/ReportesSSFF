@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react'
 
 export interface Metrica {
   label: string
+  key: string          // 'Pago_Liviano' | 'NORMAL' | 'Refi_Comercial' | '__totales__'
   operaciones: number
   capital: number
   prom_capital: number
@@ -30,6 +31,10 @@ export interface ConveniosData {
   last_sync: string | null
   email_received_at: string | null
   email_subject: string | null
+  // Métricas de seguros — solo aplican a Pago Liviano
+  // null cuando SQL Server no respondió durante el sync o no había filas Pago Liviano
+  q_seg:    number | null
+  conv_seg: number | null
 }
 
 export interface DiaHistorial {

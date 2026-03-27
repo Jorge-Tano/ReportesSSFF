@@ -25,7 +25,7 @@ export default function PPFFPage() {
     <div>
       <NavbarWithMobile />
       <AppHeader />
-      <div className="min-h-screen bg-white text-gray-600 p-6 md:p-10 font-sans">
+      <div className="min-h-screen bg-white text-black px-4 py-3 md:px-6 md:py-4 font-sans">
         <HeaderPPFF
           fecha={fechaActiva}
           esHoy={esHoy}

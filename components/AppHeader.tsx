@@ -101,10 +101,6 @@ export function AppHeader() {
                 </div>
               </div>
 
-              <div className="p-2 space-y-0.5">
-                <DropdownLink href="/registro" icon={<UserPlus className="w-4 h-4" />} label="Registrar usuario" onClick={() => setMenuOpen(false)} />
-              </div>
-
               <div className="p-2 border-t border-emerald-100">
                 <button
                   onClick={() => signOut({ callbackUrl: '/' })}

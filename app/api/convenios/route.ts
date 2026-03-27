@@ -11,6 +11,9 @@
  * Modelo: cada versión es un control_id independiente.
  * Las métricas de una versión = registros de ESE control_id únicamente.
  * No se combinan versiones — cada una refleja el estado del CSV en ese momento.
+ *
+ * q_seg y conv_seg vienen de control_reportes (calculados al momento de la ingesta).
+ * Solo aplican a Pago Liviano; son NULL si SQL Server no respondió durante el sync.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -47,11 +50,12 @@ async function getMetricasPorControl(controlId: number) {
     const capital     = r ? Math.round(Number(r.capital))    : 0
     const financiado  = r ? Math.round(Number(r.financiado)) : 0
     const prom_capital = operaciones > 0 ? Math.round(capital / operaciones) : 0
-    return { label, operaciones, capital, prom_capital, financiado }
+    return { label, key, operaciones, capital, prom_capital, financiado }
   })
 
   const tot = {
     label:        'Totales',
+    key:          '__totales__',
     operaciones:  metricas.reduce((s, r) => s + r.operaciones, 0),
     capital:      metricas.reduce((s, r) => s + r.capital,     0),
     financiado:   metricas.reduce((s, r) => s + r.financiado,  0),
@@ -101,9 +105,9 @@ async function getHistorial() {
   `)
 
   return rows.map((r: Record<string, unknown>) => ({
-    fecha:            r.fecha,
-    versiones:        Number(r.versiones),
-    ultima_version:   Number(r.ultima_version),
+    fecha:             r.fecha,
+    versiones:         Number(r.versiones),
+    ultima_version:    Number(r.ultima_version),
     registros_totales: Number(r.registros_totales),
   }))
 }
@@ -134,7 +138,8 @@ export async function GET(req: NextRequest) {
     if (versionParam) {
       const { rows } = await pool.query(`
         SELECT id, version_dia, archivo, fecha_proceso, total_registros,
-               email_received_at, email_subject
+               email_received_at, email_subject,
+               q_seg, conv_seg
         FROM control_reportes
         WHERE fecha_proceso::date = $1::date AND version_dia = $2
         LIMIT 1
@@ -144,7 +149,8 @@ export async function GET(req: NextRequest) {
       // Versión más reciente del día
       const { rows } = await pool.query(`
         SELECT id, version_dia, archivo, fecha_proceso, total_registros,
-               email_received_at, email_subject
+               email_received_at, email_subject,
+               q_seg, conv_seg
         FROM control_reportes
         WHERE fecha_proceso::date = $1::date
         ORDER BY version_dia DESC
@@ -156,17 +162,19 @@ export async function GET(req: NextRequest) {
     if (!controlRow) {
       return NextResponse.json({
         fecha,
-        metricas:        PRODUCTOS.map(p => ({ label: p.label, operaciones: 0, capital: 0, prom_capital: 0, financiado: 0 }))
-                           .concat([{ label: 'Totales', operaciones: 0, capital: 0, prom_capital: 0, financiado: 0 }]),
-        version_actual:  null,
-        versiones_dia:   0,
-        archivo:         null,
-        last_sync:       null,
+        metricas:       PRODUCTOS.map(p => ({ label: p.label, key: p.key, operaciones: 0, capital: 0, prom_capital: 0, financiado: 0 }))
+                          .concat([{ label: 'Totales', key: '__totales__', operaciones: 0, capital: 0, prom_capital: 0, financiado: 0 }]),
+        version_actual: null,
+        versiones_dia:  0,
+        archivo:        null,
+        last_sync:      null,
+        q_seg:          null,
+        conv_seg:       null,
       })
     }
 
-    const metricas      = await getMetricasPorControl(Number(controlRow.id))
-    const versionesDia  = await getVersionesDia(fecha)
+    const metricas     = await getMetricasPorControl(Number(controlRow.id))
+    const versionesDia = await getVersionesDia(fecha)
 
     return NextResponse.json({
       fecha,
@@ -178,6 +186,9 @@ export async function GET(req: NextRequest) {
       last_sync:         controlRow.fecha_proceso,
       email_received_at: controlRow.email_received_at ?? null,
       email_subject:     controlRow.email_subject     ?? null,
+      // Métricas de seguros — NULL si SQL Server no respondió durante el sync
+      q_seg:             controlRow.q_seg    != null ? Number(controlRow.q_seg)             : null,
+      conv_seg:          controlRow.conv_seg != null ? Number(controlRow.conv_seg)           : null,
     })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Error'
