@@ -35,7 +35,7 @@ export function NavbarWithMobile() {
   // Filtrar items según rol
   const navItems = allNavItems.filter(item => !item.adminOnly || isAdmin)
 
-  const initials = session?.user?.name?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() ?? '?'
+  const initials = session?.user?.name?.split(' ').slice(0, 2).map((w:any) => w[0]).join('').toUpperCase() ?? '?'
 
   const shortLabel = (item: NavItem) => {
     if (item.label === 'Resumen Convenios') return 'Convenios'

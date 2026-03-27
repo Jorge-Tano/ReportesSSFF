@@ -5,7 +5,7 @@ export function useRole() {
   const { data: session, status } = useSession()
   
   const isAdmin = session?.user?.role === 'administrador'
-  const isUser = session?.user?.role === 'user'
+  const isUser = session?.user?.role === 'usuario'
   
   return {
     isAdmin,

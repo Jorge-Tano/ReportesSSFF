@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { Home, BarChart2, UserPlus, LogOut, User, Settings, ChevronDown } from 'lucide-react'
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation'
 
 const ROUTE_META: Record<string, { label: string; icon: React.ReactNode }> = {
   '/dashboard': { label: 'Dashboard', icon: <Home className="w-5 h-5" /> },
@@ -36,12 +36,13 @@ export function AppHeader() {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const router = useRouter();
-  const initials = session?.user?.name?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() ?? '?'
+  const router = useRouter()
+  
+  // Corregido: agregar tipo explícito al parámetro 'w'
+  const initials = session?.user?.name?.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase() ?? '?'
   const username = (session?.user as { username?: string })?.username ?? 'usuario'
 
   return (
-    // Elemento de bloque normal — ocupa su fila, empuja el <main> hacia abajo
     <header className="w-full h-20 bg-white border-b border-emerald-200 shadow-sm flex items-center px-8 gap-6 select-none flex-shrink-0">
 
       {/* Página activa */}

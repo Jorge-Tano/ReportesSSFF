@@ -13,7 +13,7 @@ export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request, secret })
   
   const isAuthenticated = !!token
-  const userRole = token?.role as string || 'user'
+  const userRole = token?.role as string || 'usuario'
   
   // Rutas públicas que no requieren autenticación
   const publicPaths = ['/', '/api/auth']
