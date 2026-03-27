@@ -154,7 +154,7 @@ export default function UsuariosPage() {
                                         </div>
                                         <div className="col-span-3 flex items-center">
                                             <span className="text-xs text-black font-mono bg-emerald-50 px-2 py-0.5 rounded-lg border border-black truncate">
-                                                @{user.username}
+                                                {user.username}
                                             </span>
                                         </div>
                                         <div className="col-span-2 flex items-center">

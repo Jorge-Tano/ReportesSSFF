@@ -1,59 +1,67 @@
+// components/NavBar.tsx
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
-import { Home, BarChart2, Phone, LogOut, UserPlus, Users, TrendingUp, FileText } from 'lucide-react'
+import { Home, BarChart2, LogOut, UserPlus, Users, TrendingUp, FileText } from 'lucide-react'
+import { useRole } from '@/hooks/useRole'
 
-interface NavItem { id: string; label: string; href: string; icon: React.ReactNode; badge?: number }
+interface NavItem { 
+  id: string; 
+  label: string; 
+  href: string; 
+  icon: React.ReactNode; 
+  badge?: number;
+  adminOnly?: boolean;
+}
 
-const navItems: NavItem[] = [
+const allNavItems: NavItem[] = [
   { id: 'home',              label: 'Inicio',            href: '/dashboard',         icon: <Home       className="w-5 h-5" /> },
   { id: 'resumen-convenios', label: 'Resumen Convenios', href: '/resumen-convenios', icon: <BarChart2  className="w-5 h-5" /> },
   { id: 'ppff',              label: 'Ventas PPFF',       href: '/ppff',              icon: <TrendingUp className="w-5 h-5" /> },
-  { id: 'logs',              label: 'Logs del Sistema',  href: '/logs',              icon: <FileText   className="w-5 h-5" /> },
-  { id: 'usuarios',          label: 'Usuarios',          href: '/usuarios',          icon: <Users      className="w-5 h-5" /> },
+  { id: 'respaldo',          label: 'Respaldo',          href: '/logs',              icon: <FileText   className="w-5 h-5" />, adminOnly: true },
+  { id: 'usuarios',          label: 'Usuarios',          href: '/usuarios',          icon: <Users      className="w-5 h-5" />, adminOnly: true },
 ]
 
 export function NavbarWithMobile() {
   const pathname          = usePathname()
   const { data: session } = useSession()
+  const { isAdmin }       = useRole()
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
-  useEffect(() => {
-    document.body.style.paddingLeft = '5rem'
-    document.body.style.transition  = 'padding-left 500ms ease-in-out'
-    const mq = window.matchMedia('(max-width: 768px)')
-    if (mq.matches) document.body.style.paddingLeft = '0'
-    const handler = (e: MediaQueryListEvent) => {
-      document.body.style.paddingLeft = e.matches ? '0' : '5rem'
-    }
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
+  // Filtrar items según rol
+  const navItems = allNavItems.filter(item => !item.adminOnly || isAdmin)
 
   const initials = session?.user?.name?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() ?? '?'
 
   const shortLabel = (item: NavItem) => {
     if (item.label === 'Resumen Convenios') return 'Convenios'
     if (item.label === 'Ventas PPFF')       return 'PPFF'
-    if (item.label === 'Logs del Sistema')  return 'Logs'
+    if (item.label === 'Respaldo')          return 'Respaldo'
     return item.label
   }
 
   return (
-    <aside className="fixed left-0 top-0 h-full z-50 w-20 flex flex-col bg-white border-r border-emerald-200 shadow-lg">
-
+    <aside className="fixed left-0 top-0 h-full z-50 w-20 flex flex-col bg-white border-r border-emerald-200 shadow-lg overflow-x-hidden">
       {/* Logo */}
       <div className="h-20 flex items-center justify-center border-b border-emerald-100 flex-shrink-0">
-        <div className="w-11 h-11 bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl flex items-center justify-center shadow-md">
-          <Phone className="w-5 h-5 text-white" />
+        <div className="w-11 h-11 rounded-2xl flex items-center justify-center">
+          <Image 
+            src="/Logo_reportes.png" 
+            alt="2Call Logo" 
+            width={44} 
+            height={44}
+            className="object-contain"
+            priority
+          />
         </div>
       </div>
 
       {/* Navegación */}
-      <nav className="p-2 space-y-1 flex-1 mt-1 overflow-y-auto">
+      <nav className="p-2 space-y-1 flex-1 mt-1 overflow-y-auto overflow-x-hidden">
         {navItems.map((item) => {
           const isActive  = pathname === item.href
           const isHovered = hoveredItem === item.id
@@ -104,7 +112,7 @@ export function NavbarWithMobile() {
       </nav>
 
       {/* Footer */}
-      <div className="p-2 flex-shrink-0 space-y-1">
+      <div className="p-2 flex-shrink-0 space-y-1 overflow-x-hidden">
         {session?.user && (
           <div className="flex justify-center py-1">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center text-white font-bold text-sm shadow-md">
@@ -113,10 +121,13 @@ export function NavbarWithMobile() {
           </div>
         )}
 
-        <FooterIconLink href="/registro" icon={<UserPlus className="w-5 h-5" />} label="Registrar usuario" shortLabel="Registro" />
+        {/* Solo admin puede ver el botón de registro */}
+        {isAdmin && (
+          <FooterIconLink href="/registro" icon={<UserPlus className="w-5 h-5" />} label="Registrar usuario" shortLabel="Registro" />
+        )}
 
         <button
-          onClick={() => signOut({ callbackUrl: '/' })}
+          onClick={() => signOut({ callbackUrl: typeof window !== 'undefined' ? window.location.origin : '/' })}
           className="relative flex flex-col items-center justify-center w-full px-1 py-2.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all duration-200 group"
         >
           <LogOut className="w-5 h-5" />

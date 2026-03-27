@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { Home, BarChart2, UserPlus, LogOut, User, Settings, ChevronDown } from 'lucide-react'
+import { useRouter } from 'next/navigation';
 
 const ROUTE_META: Record<string, { label: string; icon: React.ReactNode }> = {
   '/dashboard': { label: 'Dashboard', icon: <Home className="w-5 h-5" /> },
@@ -35,6 +36,7 @@ export function AppHeader() {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  const router = useRouter();
   const initials = session?.user?.name?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() ?? '?'
   const username = (session?.user as { username?: string })?.username ?? 'usuario'
 
@@ -74,7 +76,7 @@ export function AppHeader() {
             </div>
             <div className="text-left hidden md:block">
               <p className="text-sm font-bold text-slate-800 leading-tight">{session.user.name}</p>
-              <p className="text-xs text-emerald-600 leading-tight opacity-70">@{username}</p>
+              <p className="text-xs text-emerald-600 leading-tight opacity-70">{username}</p>
             </div>
             <ChevronDown className={
               'w-4 h-4 text-emerald-600 opacity-50 flex-shrink-0 transition-transform duration-200 hidden md:block ' +
@@ -92,18 +94,16 @@ export function AppHeader() {
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-slate-800 truncate">{session.user.name}</p>
-                    <p className="text-xs text-slate-400 truncate mt-0.5">@{username}</p>
-                    <span className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-                      En línea
-                    </span>
+                    <p className="text-xs text-slate-400 truncate mt-0.5">{username}</p>
                   </div>
                 </div>
               </div>
 
               <div className="p-2 border-t border-emerald-100">
                 <button
-                  onClick={() => signOut({ callbackUrl: '/' })}
+                  onClick={() => signOut({
+                    callbackUrl: typeof window !== 'undefined' ? window.location.origin : '/'
+                  })}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-600 font-semibold hover:bg-red-50 transition-colors duration-150"
                 >
                   <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">

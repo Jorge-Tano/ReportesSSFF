@@ -1,8 +1,10 @@
-// auth.ts  (raíz del proyecto)
+// auth.ts
 import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import pool from '@/lib/db'
 import { authConfig } from '@/auth.config'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -22,7 +24,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!username || !password) return null
 
         const result = await pool.query(
-          'SELECT id, name, username, password FROM users WHERE username = $1 LIMIT 1',
+          'SELECT id, name, username, password, role FROM users WHERE username = $1 LIMIT 1',
           [username.trim().toLowerCase()]
         )
 
@@ -37,6 +39,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id:       String(user.id),
           name:     user.name,
           username: user.username,
+          role:     user.role || 'user',
         }
       },
     }),
@@ -47,6 +50,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id       = user.id
         token.username = (user as any).username
+        token.role     = (user as any).role
       }
       return token
     },
@@ -54,8 +58,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token) {
         session.user.id       = token.id as string
         session.user.username = token.username as string
+        session.user.role     = token.role as string
       }
       return session
+    },
+    async authorized({ request, auth }) {
+      const { pathname } = request.nextUrl
+      const session = auth
+      
+      // Si no está autenticado, redirigir a login
+      if (!session) {
+        return false
+      }
+      
+      // Rutas que solo pueden acceder administradores
+      const adminOnlyPaths = ['/usuarios', '/registro', '/logs']
+      
+      // Verificar si la ruta es solo para admin
+      if (adminOnlyPaths.some(adminPath => pathname.startsWith(adminPath))) {
+        if (session.user?.role !== 'admin') {
+          return NextResponse.redirect(new URL('/dashboard', request.url))
+        }
+      }
+      
+      return true
     },
   },
 

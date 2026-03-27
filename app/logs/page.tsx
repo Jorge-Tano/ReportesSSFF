@@ -1,10 +1,19 @@
-import SyncLogsTable from './components/SyncPlLogsTable';
+'use client'
+
+import { NavbarWithMobile } from '@/components/NavBar'
+import { AppHeader } from '@/components/AppHeader'
+import SyncLogsTable from './components/SyncPlLogsTable'
 
 export default function SyncLogsPage() {
   return (
-    <div className="container mx-auto py-8 px-4">
-      <h1 className="text-2xl font-bold mb-6">Logs de Sincronización</h1>
-      <SyncLogsTable />
+    <div>
+      <NavbarWithMobile />
+      <AppHeader />
+      <div className=" bg-white text-gray-600 m-2 font-sans">
+        <div className="container mx-auto px-4 pt-3">
+          <SyncLogsTable />
+        </div>
+      </div>
     </div>
-  );
+  )
 }
