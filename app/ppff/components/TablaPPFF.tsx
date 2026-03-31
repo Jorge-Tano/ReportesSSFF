@@ -8,16 +8,14 @@ import type { SegmentoSAR } from '../types'
 const GRUPOS: Record<string, {
   hijos: string[]
   color: string
-  badgeBg: string
-  badgeText: string
 }> = {
   AV:  {
     hijos: ['AV-INB', 'AV-OUT', 'AV-LEAKAGE'],
-    color: '#1D9E75', badgeBg: '#E1F5EE', badgeText: '#0F6E56',
+    color: '#1D9E75',
   },
   SAV: {
     hijos: ['SAV-INB', 'SAV-OUT', 'SAV-LEAKAGE'],
-    color: '#378ADD', badgeBg: '#E6F1FB', badgeText: '#185FA5',
+    color: '#378ADD',
   },
 }
 
@@ -33,13 +31,8 @@ const HEADERS = [
   { label: 'ConvPrima',       align: 'right' },
 ]
 
-function PctPill({ value }: { value: number }) {
-  const label = `${value.toFixed(2).replace('.', ',')}%`
-  if (value === 0)
-    return <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium bg-gray-100 text-black">{label}</span>
-  if (value >= 50)
-    return <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ background: '#E6F1FB', color: '#185FA5' }}>{label}</span>
-  return <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ background: '#E1F5EE', color: '#0F6E56' }}>{label}</span>
+function fmtPct(v: number): string {
+  return `${v.toFixed(2).replace('.', ',')}%`
 }
 
 function ChevronIcon({ open }: { open: boolean }) {
@@ -67,7 +60,7 @@ export function TablaPPFF({ segmentos, loading }: TablaPPFFProps) {
 
   if (loading) {
     return (
-      <div className="rounded-lg border border-black overflow-hidden bg-white mt-2">
+      <div className="rounded-xl border border-gray-200 overflow-hidden bg-white mt-4">
         <div className="p-3 space-y-2">
           {[1, 0.7, 0.5, 0.35, 0.25, 0.2, 0.15, 0.1, 0.08].map((op, i) => (
             <div key={i} className="h-8 rounded-md bg-gray-50 animate-pulse" style={{ opacity: op }} />
@@ -77,21 +70,22 @@ export function TablaPPFF({ segmentos, loading }: TablaPPFFProps) {
     )
   }
 
-  // padding reducido + texto negro
-  const num  = 'px-2 py-1.5 text-right text-xs font-mono tabular-nums text-black'
-  const numS = 'px-2 py-1   text-right text-xs font-mono tabular-nums text-black'
-  const numT = 'px-2 py-2   text-right text-xs font-mono tabular-nums text-emerald-800 font-medium'
   const total = map['Total']
 
   return (
     <>
       <style>{`@keyframes slideIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}`}</style>
-      <div className="rounded-lg border border-black overflow-hidden bg-white mt-2 overflow-x-auto">
-        <table className="w-full min-w-[860px]" style={{ borderCollapse: 'collapse' }}>
+      <div className="rounded-xl border border-gray-200 overflow-hidden bg-white mt-4 overflow-x-auto">
+        <table className="w-full min-w-[860px] text-sm">
           <thead>
-            <tr className="border-b border-black bg-gray-50/60">
+            <tr className="border-b border-gray-200 bg-gray-50">
               {HEADERS.map(h => (
-                <th key={h.label} className={`px-2 py-2 text-[11px] font-medium uppercase tracking-wider text-black ${h.align === 'left' ? 'text-left' : 'text-right'}`}>
+                <th
+                  key={h.label}
+                  className={`px-3 py-2 text-xs font-medium uppercase tracking-widest text-black ${
+                    h.align === 'left' ? 'text-left' : 'text-right'
+                  }`}
+                >
                   {h.label}
                 </th>
               ))}
@@ -104,47 +98,52 @@ export function TablaPPFF({ segmentos, loading }: TablaPPFFProps) {
               if (!s) return null
               return (
                 <React.Fragment key={nombre}>
-                  <tr onClick={() => toggle(nombre)}
-                    className="cursor-pointer hover:bg-gray-50/70 transition-colors border-b border-black">
-                    <td className="px-2 py-1.5">
+                  {/* Fila de grupo */}
+                  <tr
+                    onClick={() => toggle(nombre)}
+                    className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors cursor-pointer"
+                  >
+                    <td className="px-3 py-2 text-left font-medium text-black">
                       <div className="flex items-center gap-2">
                         <ChevronIcon open={isOpen} />
                         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: cfg.color }} />
-                        <span className="text-sm font-medium text-black">{nombre}</span>
+                        <span>{nombre}</span>
                       </div>
                     </td>
-                    <td className={num}>{fmtNum(s.op)}</td>
-                    <td className={num}>{fmtCLP(s.capital)}</td>
-                    <td className={num}>{fmtCLP(s.promedio_capital)}</td>
-                    <td className={num}>{fmtCLP(s.financiado)}</td>
-                    <td className={num}>{fmtCLP(s.promedio_financiado)}</td>
-                    <td className="px-2 py-1.5 text-right"><PctPill value={s.conv_seguros} /></td>
-                    <td className={num}>{fmtCLP(s.suma_seguros)}</td>
-                    <td className="px-2 py-1.5 text-right"><PctPill value={s.por_seguro} /></td>
+                    <td className="px-3 py-2 text-right text-black">{fmtNum(s.op)}</td>
+                    <td className="px-3 py-2 text-right text-black">{fmtCLP(s.capital)}</td>
+                    <td className="px-3 py-2 text-right text-black">{fmtCLP(s.promedio_capital)}</td>
+                    <td className="px-3 py-2 text-right text-black">{fmtCLP(s.financiado)}</td>
+                    <td className="px-3 py-2 text-right text-black">{fmtCLP(s.promedio_financiado)}</td>
+                    <td className="px-3 py-2 text-right text-black">{fmtPct(s.conv_seguros)}</td>
+                    <td className="px-3 py-2 text-right text-black">{fmtCLP(s.suma_seguros)}</td>
+                    <td className="px-3 py-2 text-right text-black">{fmtPct(s.por_seguro)}</td>
                   </tr>
 
+                  {/* Filas hijos */}
                   {cfg.hijos.map((hijo, i) => {
                     const h = map[hijo]
                     if (!h) return null
                     return (
-                      <tr key={hijo}
-                        className="border-b border-black"
+                      <tr
+                        key={hijo}
+                        className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors"
                         style={{
-                          display:    isOpen ? 'table-row' : 'none',
-                          background: 'var(--color-background-secondary)',
-                          animation:  isOpen ? `slideIn 0.18s ease ${i * 40}ms both` : 'none',
-                        }}>
-                        <td className="px-2 py-1">
-                          <span className="pl-7 text-xs text-black">{hijo}</span>
+                          display:   isOpen ? 'table-row' : 'none',
+                          animation: isOpen ? `slideIn 0.18s ease ${i * 40}ms both` : 'none',
+                        }}
+                      >
+                        <td className="px-3 py-2 text-left text-black">
+                          <span className="pl-7 text-xs">{hijo}</span>
                         </td>
-                        <td className={numS}>{fmtNum(h.op)}</td>
-                        <td className={numS}>{fmtCLP(h.capital)}</td>
-                        <td className={numS}>{fmtCLP(h.promedio_capital)}</td>
-                        <td className={numS}>{fmtCLP(h.financiado)}</td>
-                        <td className={numS}>{fmtCLP(h.promedio_financiado)}</td>
-                        <td className="px-2 py-1 text-right"><PctPill value={h.conv_seguros} /></td>
-                        <td className={numS}>{fmtCLP(h.suma_seguros)}</td>
-                        <td className="px-2 py-1 text-right"><PctPill value={h.por_seguro} /></td>
+                        <td className="px-3 py-2 text-right text-xs text-black">{fmtNum(h.op)}</td>
+                        <td className="px-3 py-2 text-right text-xs text-black">{fmtCLP(h.capital)}</td>
+                        <td className="px-3 py-2 text-right text-xs text-black">{fmtCLP(h.promedio_capital)}</td>
+                        <td className="px-3 py-2 text-right text-xs text-black">{fmtCLP(h.financiado)}</td>
+                        <td className="px-3 py-2 text-right text-xs text-black">{fmtCLP(h.promedio_financiado)}</td>
+                        <td className="px-3 py-2 text-right text-xs text-black">{fmtPct(h.conv_seguros)}</td>
+                        <td className="px-3 py-2 text-right text-xs text-black">{fmtCLP(h.suma_seguros)}</td>
+                        <td className="px-3 py-2 text-right text-xs text-black">{fmtPct(h.por_seguro)}</td>
                       </tr>
                     )
                   })}
@@ -152,19 +151,18 @@ export function TablaPPFF({ segmentos, loading }: TablaPPFFProps) {
               )
             })}
 
+            {/* Fila Total */}
             {total && (
-              <tr className="border-t-2 border-black bg-emerald-50/20">
-                <td className="px-2 py-2">
-                  <span className="text-sm font-medium text-emerald-800">Total</span>
-                </td>
-                <td className={numT}>{fmtNum(total.op)}</td>
-                <td className={numT}>{fmtCLP(total.capital)}</td>
-                <td className={numT}>{fmtCLP(total.promedio_capital)}</td>
-                <td className={numT}>{fmtCLP(total.financiado)}</td>
-                <td className={numT}>{fmtCLP(total.promedio_financiado)}</td>
-                <td className="px-2 py-2 text-right"><PctPill value={total.conv_seguros} /></td>
-                <td className={numT}>{fmtCLP(total.suma_seguros)}</td>
-                <td className="px-2 py-2 text-right"><PctPill value={total.por_seguro} /></td>
+              <tr className="border-t border-emerald-200 bg-emerald-50/30">
+                <td className="px-3 py-2 text-left font-medium text-black">Total</td>
+                <td className="px-3 py-2 text-right font-medium text-black">{fmtNum(total.op)}</td>
+                <td className="px-3 py-2 text-right font-medium text-black">{fmtCLP(total.capital)}</td>
+                <td className="px-3 py-2 text-right font-medium text-black">{fmtCLP(total.promedio_capital)}</td>
+                <td className="px-3 py-2 text-right font-medium text-black">{fmtCLP(total.financiado)}</td>
+                <td className="px-3 py-2 text-right font-medium text-black">{fmtCLP(total.promedio_financiado)}</td>
+                <td className="px-3 py-2 text-right font-medium text-black">{fmtPct(total.conv_seguros)}</td>
+                <td className="px-3 py-2 text-right font-medium text-black">{fmtCLP(total.suma_seguros)}</td>
+                <td className="px-3 py-2 text-right font-medium text-black">{fmtPct(total.por_seguro)}</td>
               </tr>
             )}
           </tbody>

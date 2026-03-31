@@ -8,12 +8,12 @@
  *   ?historial=1        → lista de días (últimos 90)
  *   ?fecha=X&versiones=1→ lista de versiones disponibles para ese día
  *
- * Modelo: cada versión es un control_id independiente.
- * Las métricas de una versión = registros de ESE control_id únicamente.
- * No se combinan versiones — cada una refleja el estado del CSV en ese momento.
+ * Las métricas de seguros (q_seg, conv_seg, por_seg, suma_seguros) viven en
+ * convenios_procesados por fila. Se agregan aquí por producto usando MAX()
+ * porque todas las filas del mismo producto/control_id comparten el mismo valor
+ * (se calcularon una vez y se replicaron en el sync).
  *
- * q_seg y conv_seg vienen de control_reportes (calculados al momento de la ingesta).
- * Solo aplican a Pago Liviano; son NULL si SQL Server no respondió durante el sync.
+ * NULL en esas columnas = SQL Server no respondió durante el sync de ese archivo.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -30,12 +30,19 @@ const PRODUCTOS = [
 // ── Métricas de un control_id específico ─────────────────────────────────────
 
 async function getMetricasPorControl(controlId: number) {
+  // Una sola query — agrupa por producto y levanta las métricas de seguro con MAX().
+  // MAX() es seguro aquí porque todas las filas del mismo (control_id, producto)
+  // tienen idénticos valores de q_seg/conv_seg/por_seg/suma_seguros.
   const { rows } = await pool.query(`
     SELECT
       fld_nom_producto,
       COUNT(*)                              AS operaciones,
       COALESCE(SUM(deuda_original), 0)      AS capital,
-      COALESCE(SUM(fld_mto_con),    0)      AS financiado
+      COALESCE(SUM(fld_mto_con),    0)      AS financiado,
+      MAX(q_seg)                            AS q_seg,
+      MAX(conv_seg)                         AS conv_seg,
+      MAX(por_seg)                          AS por_seg,
+      MAX(suma_seguros)                     AS suma_seguros
     FROM convenios_procesados
     WHERE control_id = $1
       AND fld_nom_producto = ANY($2)
@@ -45,14 +52,30 @@ async function getMetricasPorControl(controlId: number) {
   const map = new Map(rows.map((r: Record<string, unknown>) => [r.fld_nom_producto, r]))
 
   const metricas = PRODUCTOS.map(({ label, key }) => {
-    const r           = map.get(key) as Record<string, unknown> | undefined
-    const operaciones = r ? Number(r.operaciones)            : 0
-    const capital     = r ? Math.round(Number(r.capital))    : 0
-    const financiado  = r ? Math.round(Number(r.financiado)) : 0
+    const r            = map.get(key) as Record<string, unknown> | undefined
+    const operaciones  = r ? Number(r.operaciones)            : 0
+    const capital      = r ? Math.round(Number(r.capital))    : 0
+    const financiado   = r ? Math.round(Number(r.financiado)) : 0
     const prom_capital = operaciones > 0 ? Math.round(capital / operaciones) : 0
-    return { label, key, operaciones, capital, prom_capital, financiado }
+
+    return {
+      label,
+      key,
+      operaciones,
+      capital,
+      prom_capital,
+      financiado,
+      // null si SQL Server no respondió durante el sync
+      q_seg:        r?.q_seg        != null ? Number(r.q_seg)        : null,
+      conv_seg:     r?.conv_seg     != null ? Number(r.conv_seg)     : null,
+      por_seg:      r?.por_seg      != null ? Number(r.por_seg)      : null,
+      suma_seguros: r?.suma_seguros != null ? Number(r.suma_seguros) : null,
+    }
   })
 
+  // Fila de totales — suma_seguros y por_seg se suman; q_seg y conv_seg
+  // no son promediables directamente, se dejan null en la fila de totales
+  // (el panel original también los dejaba en 0/comentados para Totales)
   const tot = {
     label:        'Totales',
     key:          '__totales__',
@@ -60,10 +83,18 @@ async function getMetricasPorControl(controlId: number) {
     capital:      metricas.reduce((s, r) => s + r.capital,     0),
     financiado:   metricas.reduce((s, r) => s + r.financiado,  0),
     prom_capital: 0,
+    q_seg:        null as number | null,
+    conv_seg:     null as number | null,
+    por_seg:      null as number | null,
+    suma_seguros: metricas.every(r => r.suma_seguros === null)
+      ? null
+      : metricas.reduce((s, r) => s + (r.suma_seguros ?? 0), 0),
   }
-  tot.prom_capital = tot.operaciones > 0 ? Math.round(tot.capital / tot.operaciones) : 0
-  metricas.push(tot)
+  tot.prom_capital = tot.operaciones > 0
+    ? Math.round(tot.capital / tot.operaciones)
+    : 0
 
+  metricas.push(tot)
   return metricas
 }
 
@@ -120,37 +151,30 @@ export async function GET(req: NextRequest) {
     const hoy   = new Date().toISOString().slice(0, 10)
     const fecha = searchParams.get('fecha') ?? hoy
 
-    // Historial de días
     if (searchParams.get('historial') === '1') {
       return NextResponse.json({ historial: await getHistorial() })
     }
 
-    // Lista de versiones de un día
     if (searchParams.get('versiones') === '1') {
       return NextResponse.json({ versiones: await getVersionesDia(fecha), fecha })
     }
 
-    // Métricas: buscar control_id según versión pedida o la más reciente
     const versionParam = searchParams.get('version')
-
     let controlRow: Record<string, unknown> | null = null
 
     if (versionParam) {
       const { rows } = await pool.query(`
         SELECT id, version_dia, archivo, fecha_proceso, total_registros,
-               email_received_at, email_subject,
-               q_seg, conv_seg
+               email_received_at, email_subject
         FROM control_reportes
         WHERE fecha_proceso::date = $1::date AND version_dia = $2
         LIMIT 1
       `, [fecha, Number(versionParam)])
       controlRow = rows[0] ?? null
     } else {
-      // Versión más reciente del día
       const { rows } = await pool.query(`
         SELECT id, version_dia, archivo, fecha_proceso, total_registros,
-               email_received_at, email_subject,
-               q_seg, conv_seg
+               email_received_at, email_subject
         FROM control_reportes
         WHERE fecha_proceso::date = $1::date
         ORDER BY version_dia DESC
@@ -159,17 +183,30 @@ export async function GET(req: NextRequest) {
       controlRow = rows[0] ?? null
     }
 
+    // Respuesta vacía — sin datos para esta fecha/versión
+    const metricasVacias = PRODUCTOS
+      .map(p => ({
+        label: p.label, key: p.key,
+        operaciones: 0, capital: 0, prom_capital: 0, financiado: 0,
+        q_seg: null, conv_seg: null, por_seg: null, suma_seguros: null,
+      }))
+      .concat([{
+        label: 'Totales', key: '__totales__',
+        operaciones: 0, capital: 0, prom_capital: 0, financiado: 0,
+        q_seg: null, conv_seg: null, por_seg: null, suma_seguros: null,
+      }])
+
     if (!controlRow) {
       return NextResponse.json({
         fecha,
-        metricas:       PRODUCTOS.map(p => ({ label: p.label, key: p.key, operaciones: 0, capital: 0, prom_capital: 0, financiado: 0 }))
-                          .concat([{ label: 'Totales', key: '__totales__', operaciones: 0, capital: 0, prom_capital: 0, financiado: 0 }]),
+        metricas:       metricasVacias,
         version_actual: null,
         versiones_dia:  0,
+        versiones:      [],
         archivo:        null,
         last_sync:      null,
-        q_seg:          null,
-        conv_seg:       null,
+        email_received_at: null,
+        email_subject:     null,
       })
     }
 
@@ -186,10 +223,8 @@ export async function GET(req: NextRequest) {
       last_sync:         controlRow.fecha_proceso,
       email_received_at: controlRow.email_received_at ?? null,
       email_subject:     controlRow.email_subject     ?? null,
-      // Métricas de seguros — NULL si SQL Server no respondió durante el sync
-      q_seg:             controlRow.q_seg    != null ? Number(controlRow.q_seg)             : null,
-      conv_seg:          controlRow.conv_seg != null ? Number(controlRow.conv_seg)           : null,
     })
+
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Error'
     return NextResponse.json({ error: msg }, { status: 500 })

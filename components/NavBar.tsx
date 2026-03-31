@@ -8,39 +8,40 @@ import { usePathname } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
 import { Home, BarChart2, LogOut, UserPlus, Users, TrendingUp, FileText } from 'lucide-react'
 import { useRole } from '@/hooks/useRole'
+import logo from '@/public/2call_logo.png'
 
-interface NavItem { 
-  id: string; 
-  label: string; 
-  href: string; 
-  icon: React.ReactNode; 
+interface NavItem {
+  id: string;
+  label: string;
+  href: string;
+  icon: React.ReactNode;
   badge?: number;
   adminOnly?: boolean;
 }
 
 const allNavItems: NavItem[] = [
-  { id: 'home',              label: 'Inicio',            href: '/dashboard',         icon: <Home       className="w-5 h-5" /> },
-  { id: 'resumen-convenios', label: 'Resumen Convenios', href: '/resumen-convenios', icon: <BarChart2  className="w-5 h-5" /> },
-  { id: 'ppff',              label: 'Ventas PPFF',       href: '/ppff',              icon: <TrendingUp className="w-5 h-5" /> },
-  { id: 'respaldo',          label: 'Respaldo',          href: '/logs',              icon: <FileText   className="w-5 h-5" />, adminOnly: true },
-  { id: 'usuarios',          label: 'Usuarios',          href: '/usuarios',          icon: <Users      className="w-5 h-5" />, adminOnly: true },
+  { id: 'home', label: 'Inicio', href: '/dashboard', icon: <Home className="w-5 h-5" /> },
+  { id: 'resumen-convenios', label: 'Resumen Convenios', href: '/resumen-convenios', icon: <BarChart2 className="w-5 h-5" /> },
+  { id: 'ppff', label: 'Ventas PPFF', href: '/ppff', icon: <TrendingUp className="w-5 h-5" /> },
+  { id: 'respaldo', label: 'Respaldo', href: '/logs', icon: <FileText className="w-5 h-5" />, adminOnly: true },
+  { id: 'usuarios', label: 'Usuarios', href: '/usuarios', icon: <Users className="w-5 h-5" />, adminOnly: true },
 ]
 
 export function NavbarWithMobile() {
-  const pathname          = usePathname()
+  const pathname = usePathname()
   const { data: session } = useSession()
-  const { isAdmin }       = useRole()
+  const { isAdmin } = useRole()
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
   // Filtrar items según rol
   const navItems = allNavItems.filter(item => !item.adminOnly || isAdmin)
 
-  const initials = session?.user?.name?.split(' ').slice(0, 2).map((w:any) => w[0]).join('').toUpperCase() ?? '?'
+  const initials = session?.user?.name?.split(' ').slice(0, 2).map((w: any) => w[0]).join('').toUpperCase() ?? '?'
 
   const shortLabel = (item: NavItem) => {
     if (item.label === 'Resumen Convenios') return 'Convenios'
-    if (item.label === 'Ventas PPFF')       return 'PPFF'
-    if (item.label === 'Respaldo')          return 'Respaldo'
+    if (item.label === 'Ventas PPFF') return 'PPFF'
+    if (item.label === 'Respaldo') return 'Respaldo'
     return item.label
   }
 
@@ -48,22 +49,20 @@ export function NavbarWithMobile() {
     <aside className="fixed left-0 top-0 h-full z-50 w-20 flex flex-col bg-white border-r border-emerald-200 shadow-lg overflow-x-hidden">
       {/* Logo */}
       <div className="h-20 flex items-center justify-center border-b border-emerald-100 flex-shrink-0">
-        <div className="w-11 h-11 rounded-2xl flex items-center justify-center">
-          <Image 
-            src="/Logo_reportes.png" 
-            alt="2Call Logo" 
-            width={44} 
-            height={44}
-            className="object-contain"
-            priority
-          />
-        </div>
+        <Image
+          src={logo}
+          alt="2Call Logo"
+          width={70}
+          height={70}
+          className="object-contain"
+          priority
+        />
       </div>
 
       {/* Navegación */}
       <nav className="p-2 space-y-1 flex-1 mt-1 overflow-y-auto overflow-x-hidden">
         {navItems.map((item) => {
-          const isActive  = pathname === item.href
+          const isActive = pathname === item.href
           const isHovered = hoveredItem === item.id
 
           return (
