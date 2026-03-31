@@ -44,8 +44,6 @@ export default function ConveniosPage() {
 
         <TablaConvenios
           metricas={data?.metricas ?? []}
-          q_seg={data?.q_seg}
-          conv_seg={data?.conv_seg}
           loading={loading}
         />
 

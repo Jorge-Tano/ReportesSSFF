@@ -62,7 +62,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id:       String(user.id),
           name:     user.name,
           username: user.username,
-          role:     user.role || 'usuario',  // Por defecto 'usuario'
+          role:     user.role || 'usuario',
         }
       },
     }),
